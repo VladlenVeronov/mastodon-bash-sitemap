@@ -1,90 +1,188 @@
 # Mastodon Bash Sitemap Generator 🚀
 
 A lightweight, high-performance sitemap generator for Mastodon instances.  
-Unlike the built-in Ruby task, this script uses direct PostgreSQL queries to generate sitemaps in seconds, making it ideal for large instances, low-resource VPS, or Docker/Coolify setups.
-
-## ✨ Features
-
-- **🚀 Fast:** Uses direct SQL queries instead of heavy Ruby/Rails execution.
-- **🧠 Smart:** Auto-discovers Docker containers (perfect for Coolify/Docker Compose).
-- **🔍 SEO Friendly:** Specifically designed to index **public profiles** and **public statuses**.
-- **🛠 Zero Dependencies:** Works with standard Linux tools (`bash`, `docker`, `cron`).
+Unlike the built-in Ruby task, this script uses direct PostgreSQL queries to generate sitemaps in seconds, making it ideal for large instances, low-resource VPS environments, or Docker/Coolify deployments.
 
 ---
 
-## 📥 Installation
+## ✨ Features
 
-### 1. Setup Directory
-Create a directory to store the script and the generated sitemap:
+- 🚀 **High Performance** — Direct SQL queries instead of heavy Ruby/Rails execution
+- 🧠 **Auto Container Detection** — Works seamlessly with Docker & Coolify
+- 🔍 **SEO-Optimized** — Indexes public profiles and public statuses
+- 🛠 **Zero Extra Dependencies** — Requires only `bash`, `docker`, and `cron`
+- 🔒 **Privacy-Compliant** — Respects Mastodon visibility rules
+
+---
+
+## 📦 Installation
+
+### 1️⃣ Create Directory
 
 ```bash
 sudo mkdir -p /opt/sitemap
 sudo chown $USER:$USER /opt/sitemap
 ```
 
-### 2. Create the Script
-Create a new file named `generate_sitemap.sh`:
+---
+
+### 2️⃣ Create the Script
 
 ```bash
 nano /opt/sitemap/generate_sitemap.sh
 ```
 
-*(Paste the script code here, save with `Ctrl+O`, and exit with `Ctrl+X`)*
-
-Make the script executable:
+Paste the script contents, then:
 
 ```bash
 chmod +x /opt/sitemap/generate_sitemap.sh
 ```
 
-### 3. Configuration
-Open the script and edit the `DOMAIN` variable at the top of the file to match your Mastodon instance:
+---
+
+### 3️⃣ Configure Domain
+
+Edit the `DOMAIN` variable inside the script:
 
 ```bash
-# Inside generate_sitemap.sh
 DOMAIN="social.yourdomain.com"
 ```
 
-### 4. Automate with Cron
-To keep your sitemap up to date automatically, add a cron job.
+---
 
-1. Open the cron editor:
+## ⏱ Automating with Cron
 
-   ```bash
-   crontab -e
-   ```
+Keeping your sitemap fresh is critical for SEO indexing stability.
 
-2. Add the following line at the end of the file to run the generator every night at midnight (00:00):
+### Option A — User Crontab (Recommended)
 
-   ```bash
-   0 0 * * * /opt/sitemap/generate_sitemap.sh > /dev/null 2>&1
-   ```
+```bash
+crontab -e
+```
+
+Add:
+
+```bash
+0 0 * * * /opt/sitemap/generate_sitemap.sh > /dev/null 2>&1
+```
+
+Runs daily at **00:00**.
+
+---
+
+### Option B — System-wide Cron File
+
+Create:
+
+```bash
+sudo nano /etc/cron.d/mastodon-sitemap
+```
+
+Insert:
+
+```text
+# -----------------------------------------------------------------
+# Mastodon Bash Sitemap Generator - Cron Job
+# Copy to: /etc/cron.d/mastodon-sitemap
+# -----------------------------------------------------------------
+
+0 0 * * * root /opt/sitemap/generate_sitemap.sh > /dev/null 2>&1
+```
 
 ---
 
 ## 🌐 Serving the Sitemap
 
-The script is designed to be flexible and offers two ways to serve the file:
+Two deployment models are supported:
 
-1. **Direct Sync (Default):** The script automatically runs `docker cp` to copy the generated `sitemap.xml` into your Mastodon `web` container's `public` folder. It becomes available immediately at `https://yourdomain.com/sitemap.xml`.
-2. **Nginx Sidecar:** You can point an external Nginx container or your reverse proxy (Traefik/Nginx) to serve the file directly from the host directory `/opt/sitemap/sitemap.xml`.
+### 1️⃣ Docker Auto-Sync (Default)
+
+The script runs:
+
+```
+docker cp sitemap.xml <mastodon-web-container>:/mastodon/public/
+```
+
+Your sitemap becomes available at:
+
+```
+https://yourdomain.com/sitemap.xml
+```
 
 ---
 
-## 🔒 Content Privacy & Safety
+### 2️⃣ Reverse Proxy Serving
 
-This generator strictly respects Mastodon privacy settings to ensure no private data is leaked to search engines. It only indexes:
+Alternatively, configure Nginx or Traefik to serve:
 
-- **Public Profiles:** Local accounts that are **not** suspended, silenced, or moved.
-- **Public Statuses:** Local statuses with `public` visibility (`visibility = 0`) that are **not** reblogs (boosts).
-- **Limits:** Default limits are set to 10,000 profiles and 40,000 statuses to prevent memory overload (configurable in the script).
+```
+/opt/sitemap/sitemap.xml
+```
+
+This method removes container coupling and is operationally cleaner in high-availability setups.
+
+---
+
+## 🔒 Privacy & Filtering Logic
+
+The generator strictly respects Mastodon privacy settings:
+
+### ✔ Indexed
+
+- Local accounts
+- Not suspended
+- Not silenced
+- Not moved
+- Public statuses (`visibility = 0`)
+- Non-reblogs (no boosts)
+
+### ❌ Excluded
+
+- Followers-only posts
+- Direct messages
+- Boosts
+- Suspended or silenced accounts
+
+---
+
+## ⚙ Performance Limits
+
+Default limits:
+
+| Type      | Limit  |
+|-----------|--------|
+| Profiles  | 10,000 |
+| Statuses  | 40,000 |
+
+Limits can be adjusted inside the script.
+
+The purpose is to prevent memory spikes on low-resource VPS deployments.
+
+---
+
+## 🧩 Architecture Overview
+
+```
+PostgreSQL → SQL Query → XML Builder → sitemap.xml → Docker Sync / Proxy
+```
+
+No Rails runtime.  
+No Sidekiq jobs.  
+No unnecessary memory overhead.
 
 ---
 
 ## 🤝 Contributing
 
-Feel free to open issues or submit pull requests if you want to improve the SQL queries or add support for other container orchestrators!
+Pull requests are welcome for:
+
+- Query optimization
+- Multi-instance federation filtering
+- Orchestrator abstraction
+- Pagination support (sitemap index)
+
+---
 
 ## 📄 License
 
-**MIT License**. Feel free to use, modify, and distribute this script for your own instances.
+MIT License — Free for personal and commercial use.
