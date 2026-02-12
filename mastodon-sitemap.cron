@@ -1,0 +1,13 @@
+# Run the Mastodon sitemap generator every night at 00:00
+# Ensure the script is executable: chmod +x /opt/sitemap/generate_sitemap.sh
+
+0 0 * * * root /opt/sitemap/generate_sitemap.sh > /dev/null 2>&1
+
+### Alternative: Using a Cron File
+If you prefer using `/etc/cron.d/` instead of `crontab -e`, you can create a dedicated cron file:
+
+1. Create a new file:
+   ```bash
+   sudo nano /etc/cron.d/mastodon-sitemap
+
+0 0 * * * root /opt/sitemap/generate_sitemap.sh > /dev/null 2>&1
